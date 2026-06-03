@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from scipy.signal import chirp, spectrogram
 
-plt.rcParams['font.family'] = 'DejaVu Sans'
+plt.rcParams['font.family'] = ['WenQuanYi Zen Hei', 'DejaVu Sans']
+plt.rcParams['axes.unicode_minus'] = False
 plt.rcParams['figure.dpi'] = 150
 
 # ── 参数 ──────────────────────────────────────────────
@@ -21,21 +22,21 @@ down = chirp(t, f0=f1, f1=f0, t1=T, method='linear', phi=90)
 # 图1：时域波形对比
 # ══════════════════════════════════════════════════════
 fig1, axes = plt.subplots(2, 1, figsize=(11, 6), sharex=True)
-fig1.suptitle('Chirp Signal — Time-Domain Waveform\n啁啾信号时域波形', fontsize=14, fontweight='bold')
+fig1.suptitle('啁啾信号时域波形', fontsize=14, fontweight='bold')
 
 for ax, sig, label, color in zip(
         axes,
         [up, down],
-        ['Up-Chirp  (上啁啾: 10 Hz → 500 Hz)', 'Down-Chirp  (下啁啾: 500 Hz → 10 Hz)'],
+        ['上啁啾：10 Hz → 500 Hz（频率递增）', '下啁啾：500 Hz → 10 Hz（频率递减）'],
         ['steelblue', 'tomato']):
     ax.plot(t[:3000], sig[:3000], color=color, lw=0.8)
-    ax.set_ylabel('Amplitude', fontsize=11)
+    ax.set_ylabel('幅值', fontsize=11)
     ax.set_title(label, fontsize=12)
     ax.axhline(0, color='gray', lw=0.5, ls='--')
     ax.set_ylim(-1.4, 1.4)
     ax.grid(True, alpha=0.3)
 
-axes[-1].set_xlabel('Time (s)', fontsize=11)
+axes[-1].set_xlabel('时间 (s)', fontsize=11)
 plt.tight_layout()
 fig1.savefig('/home/user/FBG_pro/fig1_waveform.png', bbox_inches='tight')
 plt.close()
@@ -44,16 +45,16 @@ plt.close()
 # 图2：瞬时频率 vs 时间
 # ══════════════════════════════════════════════════════
 fig2, ax = plt.subplots(figsize=(10, 4))
-fig2.suptitle('Instantaneous Frequency vs Time\n瞬时频率随时间变化', fontsize=14, fontweight='bold')
+fig2.suptitle('瞬时频率随时间变化', fontsize=14, fontweight='bold')
 
 freq_up   = f0 + (f1 - f0) * t / T
 freq_down = f1 - (f1 - f0) * t / T
 
-ax.plot(t, freq_up,   color='steelblue', lw=2.5, label='Up-Chirp（上啁啾）')
-ax.plot(t, freq_down, color='tomato',    lw=2.5, label='Down-Chirp（下啁啾）', ls='--')
+ax.plot(t, freq_up,   color='steelblue', lw=2.5, label='上啁啾')
+ax.plot(t, freq_down, color='tomato',    lw=2.5, label='下啁啾', ls='--')
 ax.fill_between(t, freq_up, freq_down, alpha=0.08, color='purple')
-ax.set_xlabel('Time (s)', fontsize=12)
-ax.set_ylabel('Frequency (Hz)', fontsize=12)
+ax.set_xlabel('时间 (s)', fontsize=12)
+ax.set_ylabel('频率 (Hz)', fontsize=12)
 ax.legend(fontsize=11)
 ax.grid(True, alpha=0.3)
 ax.set_xlim(0, T)
@@ -65,21 +66,21 @@ plt.close()
 # 图3：时频谱图（Spectrogram）
 # ══════════════════════════════════════════════════════
 fig3, axes = plt.subplots(1, 2, figsize=(13, 5))
-fig3.suptitle('Spectrogram (Time-Frequency Analysis)\n时频谱图', fontsize=14, fontweight='bold')
+fig3.suptitle('时频谱图（短时傅里叶变换）', fontsize=14, fontweight='bold')
 
 for ax, sig, label, cmap in zip(
         axes,
         [up, down],
-        ['Up-Chirp', 'Down-Chirp'],
+        ['上啁啾', '下啁啾'],
         ['Blues', 'Reds']):
     f_arr, t_arr, Sxx = spectrogram(sig, fs=fs, nperseg=256, noverlap=200)
     im = ax.pcolormesh(t_arr, f_arr, 10*np.log10(Sxx + 1e-12),
                        cmap=cmap, shading='gouraud', vmin=-60)
     ax.set_ylim(0, 600)
-    ax.set_xlabel('Time (s)', fontsize=11)
-    ax.set_ylabel('Frequency (Hz)', fontsize=11)
+    ax.set_xlabel('时间 (s)', fontsize=11)
+    ax.set_ylabel('频率 (Hz)', fontsize=11)
     ax.set_title(label, fontsize=12)
-    fig3.colorbar(im, ax=ax, label='Power (dB)')
+    fig3.colorbar(im, ax=ax, label='功率 (dB)')
 
 plt.tight_layout()
 fig3.savefig('/home/user/FBG_pro/fig3_spectrogram.png', bbox_inches='tight')
@@ -99,11 +100,12 @@ compressed = np.abs(compressed)
 compressed /= compressed.max()
 
 fig4, axes = plt.subplots(2, 1, figsize=(11, 6))
-fig4.suptitle('Pulse Compression via Matched Filter\n脉冲压缩（匹配滤波）', fontsize=14, fontweight='bold')
+fig4.suptitle('脉冲压缩（匹配滤波）', fontsize=14, fontweight='bold')
 
 axes[0].plot(t, tx_windowed, color='steelblue', lw=0.8)
-axes[0].set_title('Transmitted Chirp Pulse（发射啁啾宽脉冲）', fontsize=12)
-axes[0].set_ylabel('Amplitude', fontsize=11)
+axes[0].set_title('发射信号：啁啾宽脉冲（加汉宁窗）', fontsize=12)
+axes[0].set_ylabel('幅值', fontsize=11)
+axes[0].set_xlabel('时间 (s)', fontsize=11)
 axes[0].grid(True, alpha=0.3)
 
 # 找峰值位置居中显示
@@ -111,9 +113,9 @@ pk = np.argmax(compressed)
 w  = 500
 sl = slice(max(0, pk-w), min(len(t), pk+w))
 axes[1].plot(t[sl] - t[pk], compressed[sl], color='tomato', lw=1.5)
-axes[1].set_title('Compressed Pulse after Matched Filter（压缩后窄脉冲）', fontsize=12)
-axes[1].set_ylabel('Normalized Amplitude', fontsize=11)
-axes[1].set_xlabel('Relative Time (s)', fontsize=11)
+axes[1].set_title('经匹配滤波后：压缩成极窄脉冲', fontsize=12)
+axes[1].set_ylabel('归一化幅值', fontsize=11)
+axes[1].set_xlabel('相对时间 (s)', fontsize=11)
 axes[1].grid(True, alpha=0.3)
 axes[1].annotate('主峰（极窄！）', xy=(0, 1.0), xytext=(0.01, 0.85),
                  arrowprops=dict(arrowstyle='->', color='black'), fontsize=11)
@@ -126,7 +128,7 @@ plt.close()
 # 图5：啁啾 FBG 示意图（概念图）
 # ══════════════════════════════════════════════════════
 fig5, ax = plt.subplots(figsize=(12, 5))
-fig5.suptitle('Chirped FBG Concept\n啁啾光纤布拉格光栅（Chirped FBG）示意', fontsize=14, fontweight='bold')
+fig5.suptitle('啁啾光纤布拉格光栅（Chirped FBG）结构示意', fontsize=14, fontweight='bold')
 ax.set_xlim(0, 10)
 ax.set_ylim(-2.5, 3.5)
 ax.axis('off')
@@ -135,7 +137,7 @@ ax.axis('off')
 ax.fill_between([0.5, 9.5], [-0.4, -0.4], [0.4, 0.4], color='#cce5ff', zorder=1)
 ax.plot([0.5, 9.5], [-0.4, -0.4], color='gray', lw=1.5)
 ax.plot([0.5, 9.5], [ 0.4,  0.4], color='gray', lw=1.5)
-ax.text(5, -0.85, 'Optical Fiber（光纤）', ha='center', fontsize=11, color='gray')
+ax.text(5, -0.85, '光纤', ha='center', fontsize=11, color='gray')
 
 # 光栅条纹：间距从大变小（啁啾）
 x_start = 1.5
